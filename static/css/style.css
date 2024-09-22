@@ -1,0 +1,17 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+
+textarea {
+    resize: none;
+}
+
+.container-fluid,
+.row-cont {
+    height: 100vh;
+}
+
+.text-box {
+    height: 80%;
+}

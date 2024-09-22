@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row row-cont">
+        <div class="col-lg-6 mx-auto col-cont">
+            <div class="header text-center">
+                <h1>TLLLM</h1>
+            </div>
+
+            <div class="row text-box">
+                <div id="text-box"></div>
+            </div>
+            <div class="row prompt-box">
+                <!-- <form action="" method="post" class="form-label" id="form"> -->
+                <textarea class="form-control" name="prompt" id="prompt" placeholder="Ask anythin here..."></textarea>
+                <button class="btn btn-primary mt-2" id="btn" type="submit" onclick="post()">Submit</button>
+                <!-- </form> -->
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    function post() {
+        const prompt = document.getElementById("prompt").value
+        let xhr = new XMLHttpRequest()
+        const url = "http://127.0.0.1:5000/prompt"
+        xhr.open('POST', url, true)
+        xhr.setRequestHeader('Content-type', 'text/plain; charset=UTF-8')
+        xhr.send(prompt);
+        xhr.onreadystatechange(() => {
+            if (xhr.status === 201) {
+                console.log("Post successfully created!")
+            }
+        })
+    }
+</script>
+{% endblock %}
