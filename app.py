@@ -1,28 +1,38 @@
 from openai import OpenAI
 import anthropic
-from flask import Flask, render_template, request, redirect, session, url_for
+from flask import Flask, render_template, request, redirect, session, url_for, Response
 from dotenv import load_dotenv
 from os import getenv
-import json
+import sse
+from gevent.pywsgi import WSGIServer
+# from queue import Queue
 
 load_dotenv()
 
-def flask():
-    app = Flask(__name__)
-    app.config["SECRET_KEY"] = getenv("SECRET_KEY")
+app = Flask(__name__)
+app.config["SECRET_KEY"] = getenv("SECRET_KEY")
 
-    @app.route("/")
-    def index():
-        return render_template("conversation.html")
-    
-    @app.route("/prompt", methods=["POST", "GET"])
-    def handlePrompt():
-        if request.method == "POST":
-            prompt_text = request.data.decode()
-            print(prompt_text)
-        return redirect("/")
+# prompt_queue = Queue()
+channel = sse.Channel()
 
-    app.run()
+
+@app.route("/", methods=["GET"])
+def index():
+    return render_template("conversation.html")
+
+# @app.route("/prompt", methods=["POST"])
+# def prompt():
+#     prompt_queue.put(request.data.decode())
+#     return Response(status=200)
+
+@app.route('/subscribe')
+def subscribe():
+    return channel.subscribe()
+
+@app.route('/publish', methods=["POST"])
+def publish():
+    channel.publish('message here') # this will be returned to client
+    return Response(status=200)
 
 def openai(prompt):
     chatGPT_client = OpenAI()
@@ -55,6 +65,8 @@ def anthropic(prompt):
     return response
 
 if __name__ == "__main__":
-    flask()
+    server = WSGIServer(("127.0.0.1", 5000), app)
+    print("Server started at 127.0.0.1:5000")
+    server.serve_forever()
     # response = openai("say one random word")
     # response_message = response.choices[0].message.content

@@ -8,31 +8,81 @@
                 <h1>TLLLM</h1>
             </div>
 
-            <div class="row text-box">
+            <div class="row text-box border p-4">
                 <div id="text-box"></div>
             </div>
             <div class="row prompt-box">
                 <!-- <form action="" method="post" class="form-label" id="form"> -->
                 <textarea class="form-control" name="prompt" id="prompt" placeholder="Ask anythin here..."></textarea>
-                <button class="btn btn-primary mt-2" id="btn" type="submit" onclick="post()">Submit</button>
+                <button class="btn btn-primary mt-2" id="btn" type="submit" onclick="publish()">Submit</button>
                 <!-- </form> -->
             </div>
         </div>
     </div>
 </div>
 <script>
-    function post() {
-        const prompt = document.getElementById("prompt").value
-        let xhr = new XMLHttpRequest()
-        const url = "http://127.0.0.1:5000/prompt"
+    var eventSource = new EventSource("/subscribe")
+
+    eventSource.onmessage = (event) => {
+        console.log(event)
+    }
+
+    eventSource.onmessage = function (event) {
+        var data = event.data
+
+        const card = document.createElement("div")
+        card.setAttribute("class", "bot card")
+        const card_body = document.createElement("div")
+        card_body.setAttribute("class", "card-body")
+        card_body.innerText = data
+        card.appendChild(card_body)
+
+        const cont1 = document.createElement("div")
+        cont1.setAttribute("class", "d-flex w-100 justify-content-start")
+        cont1.appendChild(card)
+        document.getElementById("text-box").appendChild(cont1)
+    }
+    //     // Scroll to the bottom of the output container
+    //     // var outputContainer = document.getElementById("response")
+    //     // outputContainer.scrollTop = outputContainer.scrollHeight
+    // }
+
+    function post(url, message) {
+        // const prompt = document.getElementById("prompt")
+        // const url = "http://127.0.0.1:5000/prompt"
+
+        if (message === "") return
+
+        const xhr = new XMLHttpRequest()
         xhr.open('POST', url, true)
         xhr.setRequestHeader('Content-type', 'text/plain; charset=UTF-8')
-        xhr.send(prompt);
-        xhr.onreadystatechange(() => {
-            if (xhr.status === 201) {
-                console.log("Post successfully created!")
+        xhr.send(message);
+        xhr.onreadystatechange = () => {
+            // In local files, status is 0 upon success in Mozilla Firefox
+            if (xhr.readyState === XMLHttpRequest.DONE) {
+                const status = xhr.status;
+                if (status === 0 || (status >= 200 && status < 400)) {
+                    // The request has been completed successfully
+                    const card = document.createElement("div")
+                    card.setAttribute("class", "human card")
+                    const card_body = document.createElement("div")
+                    card_body.setAttribute("class", "card-body")
+                    card_body.innerText = message
+                    card.appendChild(card_body)
+
+                    const cont2 = document.createElement("div")
+                    cont2.setAttribute("class", "d-flex w-100 justify-content-end")
+                    cont2.appendChild(card)
+                    document.getElementById("text-box").appendChild(cont2)
+                    message = ""
+                }
             }
-        })
+        }
+    }
+
+    function publish() {
+        var message = document.getElementById("prompt").value;
+        post('/publish', message);
     }
 </script>
 {% endblock %}
