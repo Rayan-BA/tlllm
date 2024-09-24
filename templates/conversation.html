@@ -8,8 +8,8 @@
                 <h1>TLLLM</h1>
             </div>
 
-            <div class="row text-box border p-4">
-                <div id="text-box"></div>
+            <div class="row text-box border p-4 overflow-scroll" id="text-cont">
+                <div id="text-box" class=""></div>
             </div>
             <div class="row prompt-box">
                 <!-- <form action="" method="post" class="form-label" id="form"> -->
@@ -36,11 +36,16 @@
         card_body.setAttribute("class", "card-body")
         card_body.innerText = data
         card.appendChild(card_body)
+        // card.appendChild(document.createTextNode(data))
 
         const cont1 = document.createElement("div")
         cont1.setAttribute("class", "d-flex w-100 justify-content-start")
         cont1.appendChild(card)
         document.getElementById("text-box").appendChild(cont1)
+        console.log("2");
+
+        const outputContainer = document.getElementById("text-cont")
+        outputContainer.scrollTop = outputContainer.scrollHeight
     }
     //     // Scroll to the bottom of the output container
     //     // var outputContainer = document.getElementById("response")
@@ -57,32 +62,35 @@
         xhr.open('POST', url, true)
         xhr.setRequestHeader('Content-type', 'text/plain; charset=UTF-8')
         xhr.send(message);
-        xhr.onreadystatechange = () => {
-            // In local files, status is 0 upon success in Mozilla Firefox
-            if (xhr.readyState === XMLHttpRequest.DONE) {
-                const status = xhr.status;
-                if (status === 0 || (status >= 200 && status < 400)) {
-                    // The request has been completed successfully
-                    const card = document.createElement("div")
-                    card.setAttribute("class", "human card")
-                    const card_body = document.createElement("div")
-                    card_body.setAttribute("class", "card-body")
-                    card_body.innerText = message
-                    card.appendChild(card_body)
 
-                    const cont2 = document.createElement("div")
-                    cont2.setAttribute("class", "d-flex w-100 justify-content-end")
-                    cont2.appendChild(card)
-                    document.getElementById("text-box").appendChild(cont2)
-                    message = ""
-                }
-            }
-        }
+        const card = document.createElement("div")
+        card.setAttribute("class", "human card")
+        const card_body = document.createElement("div")
+        card_body.setAttribute("class", "card-body")
+        card_body.innerText = message
+        card.appendChild(card_body)
+        // card.appendChild(document.createTextNode(message))
+        const cont2 = document.createElement("div")
+        cont2.setAttribute("class", "d-flex w-100 justify-content-end")
+        cont2.appendChild(card)
+        document.getElementById("text-box").appendChild(cont2)
+        console.log("1");
+        // xhr.onreadystatechange = () => {
+        //     // In local files, status is 0 upon success in Mozilla Firefox
+        //     if (xhr.readyState === XMLHttpRequest.DONE) {
+        //         const status = xhr.status;
+        //         if (status === 0 || (status >= 200 && status < 400)) {
+        //             // The request has been completed successfully
+
+        //         }
+        //     }
+        // }
     }
 
     function publish() {
-        var message = document.getElementById("prompt").value;
-        post('/publish', message);
+        var message = document.getElementById("prompt")
+        post('/publish', message.value)
+        message.value = ""
     }
 </script>
 {% endblock %}

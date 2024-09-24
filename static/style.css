@@ -12,6 +12,6 @@ textarea {
     height: 100vh;
 }
 
-.text-box {
-    height: 80%;
+#text-box {
+    height: 70vh;
 }

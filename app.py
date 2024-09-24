@@ -5,14 +5,13 @@ from dotenv import load_dotenv
 from os import getenv
 import sse
 from gevent.pywsgi import WSGIServer
-# from queue import Queue
+import time
 
 load_dotenv()
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = getenv("SECRET_KEY")
 
-# prompt_queue = Queue()
 channel = sse.Channel()
 
 
@@ -20,17 +19,13 @@ channel = sse.Channel()
 def index():
     return render_template("conversation.html")
 
-# @app.route("/prompt", methods=["POST"])
-# def prompt():
-#     prompt_queue.put(request.data.decode())
-#     return Response(status=200)
-
 @app.route('/subscribe')
 def subscribe():
     return channel.subscribe()
 
 @app.route('/publish', methods=["POST"])
 def publish():
+    # time.sleep(.5)
     channel.publish('message here') # this will be returned to client
     return Response(status=200)
 
