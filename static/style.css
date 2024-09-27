@@ -15,3 +15,37 @@ textarea {
 #text-box {
     height: 70vh;
 }
+
+.card {
+    margin-bottom: 1rem;
+}
+
+#message {
+    width: fit-content;
+}
+
+.msg-details {
+    z-index: 100;
+    opacity: 60%;
+    user-select: none;
+}
+
+/* .flash-messages {
+    animation: hideMessage forwards;
+    animation-duration: 3s;
+    animation-delay: 5s;
+}
+
+@keyframes hideMessage {
+    0% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+        height: 0;
+        padding: 0;
+        margin: 0;
+        border: none;
+    }
+} */
