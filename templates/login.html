@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="vh-100">
+    <div class="container py-5 h-100">
+        <div class="row d-flex align-items-center justify-content-center h-100">
+            <div class="col-md-7 col-lg-5 col-xl-5 offset-xl-1 card">
+                <div class="card-body">
+                    <h1>Login</h1>
+                    <form method="post" action="/login" class="d-flex flex-column">
+                        <div class="form-outline mb-4">
+                            <input type="text" name="username" class="form-control form-control"
+                                placeholder="username" />
+                        </div>
+                        <div class="form-outline mb-4">
+                            <input type="password" name="password" class="form-control form-control"
+                                placeholder="password" />
+                        </div>
+                        <!-- <div class="d-flex justify-content-around align-items-center mb-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="" id="form1Example3" checked />
+                                <label class="form-check-label" for="form1Example3"> Remember me </label>
+                            </div>
+                            <a href="#!">Forgot password?</a>
+                        </div> -->
+                        <button type="submit" class="btn btn-primary">Login</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
