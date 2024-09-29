@@ -3,7 +3,12 @@
 {% block content %}
 <div class="container-fluid">
     <div class="row row-cont">
-        <div class="col-lg-6 mx-auto col-cont">
+
+        <div class="col-2">
+            history panel
+        </div>
+
+        <div class="col-lg-8 mx-auto col-cont">
             <div class="header d-flex justify-content-center">
                 <h1>TLLLM</h1>
                 {% if session["username"] %}
@@ -22,6 +27,9 @@
                 <button class="btn btn-primary mt-2" id="btn" type="submit" onclick="publish()">Send</button>
             </div>
         </div>
+
+        <div class="col-2"></div>
+
     </div>
 </div>
 <script src="{{ url_for('static', filename='home.js') }}"></script>
