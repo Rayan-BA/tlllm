@@ -3,19 +3,36 @@ import datetime
 
 db = SQLAlchemy()
 
-class User:
+class User(db.Model):
     def __init__(self, username, password) -> None:
         self.username = username
         self.password = password
     
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement = True)
     username = db.Column(db.String(32), unique=True)
-    password = db.Column(db.String(32))
+    password = db.Column(db.String(32), nullable=False)
 
-class Chat:
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    chats = db.relationship("User", backref = "chat", cascade = "all, delete-orphan", lazy = "dynamic", primaryjoin="User.id == Chat.user_id")
 
-class Message:
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    content = db.Column(db.Text)
-    timestamp = db.Column(db.Date, default=datetime.datetime.now(datetime.UTC))
+    def check_password(self, password):
+        return self.password == password
+
+class Chat(db.Model):
+    def __init__(self) -> None:
+        pass
+    
+    id = db.Column(db.Integer, primary_key=True, autoincrement = True)
+
+    messages = db.relationship("Message", backref = "chat", cascade = "all, delete-orphan", lazy = "dynamic", primaryjoin="Chat.id == Message.chat_id")
+    user_id = db.relationship(db.Integer, db.ForeignKey("user.id"))
+
+class Message(db.Model):
+    def __init__(self, content) -> None:
+        # self.sender_id = sender_id
+        self.content = content
+    
+    id = db.Column(db.Integer, primary_key=True, autoincrement = True)
+    content = db.Column(db.Text, nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.datetime.now(datetime.UTC),nullable=False )
+
+    chat_id = db.relationship(db.Integer, db.ForeignKey("chat.id"))
