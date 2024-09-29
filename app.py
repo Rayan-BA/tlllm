@@ -4,12 +4,15 @@ from anthropic import Anthropic
 from dotenv import load_dotenv
 from openai import OpenAI
 from os import getenv
+from db import *
 import sse
 
 load_dotenv()
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = getenv("SECRET_KEY")
+app.config["SQLALCHEMY_DATABASE_URI"] = getenv("DATABASE_URI")
+db.init_app(app)
 
 channel = sse.Channel()
 
@@ -43,13 +46,28 @@ def login():
             session["username"] = username
             return redirect("home")
         else:
-            flash("Login failed")
+            return redirect("login", 406, Response("Username not accepted"))
     return render_template("login.html")
 
 @app.route("/logout")
 def logout():
     session.pop("username", None)
     return redirect("home")
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    if session.get("username"):
+        return redirect("home")
+    if request.method == "POST":
+        username = request.form.get("username")
+        password = request.form.get("password")
+        if db.session.query(User).filter(username).exists():
+            flash("Username unavailable")
+            return redirect("register")
+        newUser = User(username, password)
+        db.session.add(newUser)
+        db.session.commit()
+    return render_template("register.html")
 
 def openai(prompt):
     chatGPT_client = OpenAI()
@@ -79,6 +97,8 @@ def anthropic(prompt):
     return response
 
 if __name__ == "__main__":
+    with app.app_context():
+        db.create_all()
     server = WSGIServer(("127.0.0.1", 5000), app)
     print("Server started at 127.0.0.1:5000")
     server.serve_forever()
