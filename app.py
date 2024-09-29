@@ -1,5 +1,6 @@
 from flask import Flask, render_template, session, Response, request, redirect, flash
 from gevent.pywsgi import WSGIServer
+from flask_migrate import Migrate
 from anthropic import Anthropic
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -13,6 +14,8 @@ app = Flask(__name__)
 app.config["SECRET_KEY"] = getenv("SECRET_KEY")
 app.config["SQLALCHEMY_DATABASE_URI"] = getenv("DATABASE_URI")
 db.init_app(app)
+
+migrate = Migrate(app, db, render_as_batch=True)
 
 channel = sse.Channel()
 
@@ -42,11 +45,13 @@ def login():
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
-        if username == "rayan" and password == "pass":
+        userMatch = User.query.filter(User.username == username).first()
+        if userMatch and userMatch.check_password(password):
             session["username"] = username
             return redirect("home")
         else:
-            return redirect("login", 406, Response("Username not accepted"))
+            print("login failed")
+            return redirect("login")
     return render_template("login.html")
 
 @app.route("/logout")
@@ -61,12 +66,15 @@ def register():
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
-        if db.session.query(User).filter(username).exists():
-            flash("Username unavailable")
-            return redirect("register")
-        newUser = User(username, password)
-        db.session.add(newUser)
-        db.session.commit()
+        if User.query.filter(User.username == username).first():
+            print("Username unavailable")
+        else:
+            newUser = User(username, password)
+            db.session.add(newUser)
+            db.session.commit()
+            session["username"] = username
+            return redirect("home")
+
     return render_template("register.html")
 
 def openai(prompt):
