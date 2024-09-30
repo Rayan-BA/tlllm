@@ -6,6 +6,19 @@
 
         <div class="col-2">
             history panel
+            <div class="list-group chats">
+                <!-- <a href="#" class="list-group-item list-group-item-action active">
+                    The current link item
+                </a>
+                <a href="#" class="list-group-item list-group-item-action">A second link item</a> -->
+                {% if chats|length > 0 %}
+                {% for chat in chats %}
+                <a href="/home?chat={{chat.id}}" class="list-group-item list-group-item-action chat">
+                    {{ chat.messages.first().content }}
+                </a>
+                {% endfor %}
+                {% endif %}
+            </div>
         </div>
 
         <div class="col-lg-8 mx-auto col-cont">
@@ -19,12 +32,23 @@
             </div>
 
             <div class="row text-box border p-4 overflow-scroll" id="text-cont">
-                <div id="text-box" class=""></div>
+                <div id="text-box" class="">
+                    {% for msg in chat_msgs %}
+                    {% set sender = msg.content.split(':')[0] %}
+                    {% set content = msg.content.split(':')[1] %}
+                    <div>
+                        <span class="msg-details text-secondary">{{ sender }}</span>
+                        <div class="card">
+                            <div class="card-body">{{ content }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
             </div>
             <div class="row prompt-box">
                 <textarea class="form-control" name="prompt" id="prompt" placeholder="Ask anythin here..."
                     autofocus></textarea>
-                <button class="btn btn-primary mt-2" id="btn" type="submit" onclick="publish()">Send</button>
+                <button class="btn btn-primary mt-2" id="btn" type="submit" onclick="post()">Send</button>
             </div>
         </div>
 
@@ -32,5 +56,4 @@
 
     </div>
 </div>
-<script src="{{ url_for('static', filename='home.js') }}"></script>
 {% endblock %}

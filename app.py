@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from openai import OpenAI
 from os import getenv
 from db import *
-import sse
+from flask_socketio import SocketIO, emit
 
 load_dotenv()
 
@@ -16,8 +16,7 @@ app.config["SQLALCHEMY_DATABASE_URI"] = getenv("DATABASE_URI")
 db.init_app(app)
 
 migrate = Migrate(app, db, render_as_batch=True)
-
-channel = sse.Channel()
+socketio = SocketIO(app)
 
 @app.route("/")
 def index():
@@ -25,20 +24,17 @@ def index():
 
 @app.route("/home")
 def home():
-    return render_template("home.html")
+    if session.get("username"):
+        user = User.query.filter(User.username == session.get("username")).first()
+        chats = Chat.query.filter(Chat.user_id == user.id).all()
+    return render_template("home.html", chats=chats)
 
-@app.route("/subscribe")
-def subscribe():
-    return channel.subscribe()
-
-@app.route("/publish", methods=["POST"])
-def publish():
-    channel.publish("GPT-4o:chatgpt response") # this will be returned to client
-    channel.publish("Sonnet:claude response")
-    channel.publish("Opus:claude response")
-    # chatgpt = openai("chatgpt:" + request.data.decode())
-    # channel.publish(chatgpt)
-    return Response(status=200)
+@app.route("/home?chat=<chat_id>")
+def get_chat(chat_id):
+    # chat = Chat.query.get(chat_id)
+    print(chat_id)
+    messages = Message.query.filter(Message.chat_id == chat_id).order_by(Message.timestamp.desc()).all()
+    return render_template("home.html", chat_msgs=messages)
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -77,6 +73,27 @@ def register():
 
     return render_template("register.html")
 
+@socketio.on("user message")
+def client(msg):
+    username = session.get("username")
+    if username:
+        gpt_msg = openai(msg.get("content"))
+        user = User.query.filter(User.username == username).first()
+        if msg.get("chat_id"):
+            chat = db.session.get(Chat, int(msg.get("chat_id")))
+            user_message = Message(content=msg.get("content"), user=user, chat=chat)
+            gpt_message = Message(content=gpt_msg, chat=chat)
+        else:
+            chat = Chat(user=user)
+            user_message = Message(content=msg.get("content"), user=user, chat=chat)
+            gpt_message = Message(content=gpt_msg, chat=chat)
+
+        # db.session.add_all([user_message, gpt_message])
+        db.session.add(user_message)
+        db.session.add(gpt_message)
+        db.session.commit()
+        emit("llm message", "GPT-4o:" + gpt_msg)
+
 def openai(prompt):
     chatGPT_client = OpenAI()
     response = chatGPT_client.chat.completions.create(
@@ -107,6 +124,7 @@ def anthropic(prompt):
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
-    server = WSGIServer(("127.0.0.1", 5000), app)
-    print("Server started at 127.0.0.1:5000")
-    server.serve_forever()
+    # server = WSGIServer(("127.0.0.1", 5000), app)
+    # print("Server started at 127.0.0.1:5000")
+    # server.serve_forever()
+    socketio.run(app)
