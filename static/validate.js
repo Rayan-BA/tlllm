@@ -3,7 +3,6 @@ const validate = () => {
     const form = document.forms["rgstr-form"]
     const form_el = form.elements
     const allowedUsernames = /^[a-zA-Z0-9\_\.]+$/
-    console.log(form_el);
 
     if (form_el["username"].value === "") {
         alert("Username required")
