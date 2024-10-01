@@ -1,36 +1,41 @@
 var socket = io()
-socket.emit("client connect", { "msg": "client" })
 
-const appendMessage = (sender, message) => {
-    var model = null
-    model = message.split(":")[0]
-    message = message.split(":")[1]
+const appendMessage = (message) => {
+    // var model = null
+    // model = message.split(":")[0]
+    // message = message.split(":")[1]
     const card = document.createElement("div")
-    card.setAttribute("class", sender + " card")
+    card.setAttribute("class", "card")
     const card_body = document.createElement("div")
     card_body.setAttribute("class", "card-body")
-    card_body.innerText = message
+    card_body.innerText = message.content
     card.appendChild(card_body)
     const cont = document.createElement("div")
     const details = document.createElement("span")
     details.setAttribute("class", "msg-details text-secondary")
-    details.innerText = model
+    details.innerText = message.user.username
     cont.appendChild(details)
     cont.appendChild(card)
     document.getElementById("text-box").appendChild(cont)
 }
 
 const post = () => {
-    const urlParams = new URLSearchParams(document.location.search)
-    const chat_id = urlParams.get("chat")
+    const splitURL = document.URL.split("/")
+    const chat_id = splitURL[splitURL.length - 1]
     var message = document.getElementById("prompt")
-    socket.emit("user message", { "content": message.value, "chat_id": chat_id })
-    appendMessage("human", "You:" + message.value)
+    var username = document.cookie.split("=")[1]
+    socket.emit("user prompt", { "content": message.value, "chat_id": chat_id })
+    try { document.getElementById("fresh_chat").remove() } catch { }
+    appendMessage({ "content": message.value, "user": { "username": username } })
     message.value = ""
 }
 
+// socket.on("user message", (message) => {
+//     appendMessage(message)
+// })
+
 socket.on("llm message", (message) => {
-    appendMessage("bot", message)
+    appendMessage(message)
 })
 
 // Send on enter, new line on shift + enter
