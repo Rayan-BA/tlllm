@@ -2,47 +2,71 @@
 
 {% block content %}
 <div class="container-fluid">
-    <div class="row row-cont">
-
-        <div class="col-2">
-            history panel
-            <div class="list-group chats">
-                <!-- <a href="#" class="list-group-item list-group-item-action active">
-                    The current link item
-                </a>
-                <a href="#" class="list-group-item list-group-item-action">A second link item</a> -->
-                {% if chats|length > 0 %}
-                {% for chat in chats %}
-                <a href="/home?chat={{chat.id}}" class="list-group-item list-group-item-action chat">
-                    {{ chat.messages.first().content }}
-                </a>
-                {% endfor %}
+    <div class="row border">
+        <div class="header d-flex justify-content-center">
+            <div class="col-4"></div>
+            <div class="col-4  d-flex justify-content-center">
+                <h1>TLLLM</h1>
+            </div>
+            <div class="col-4  d-flex justify-content-start">
+                {% if session["username"] %}
+                <a href="/logout" class="align-self-center text-black">Logout</a>
+                {% else %}
+                <a href="/login" class="align-self-center text-black">Login to save
+                    your
+                    chats</a>
                 {% endif %}
             </div>
         </div>
 
-        <div class="col-lg-8 mx-auto col-cont">
-            <div class="header d-flex justify-content-center">
-                <h1>TLLLM</h1>
-                {% if session["username"] %}
-                <a href="/logout" class="align-self-center">Logout</a>
-                {% else %}
-                <a href="/login" class="align-self-center">Login</a>
-                {% endif %}
-            </div>
+    </div>
+    <div class="row row-cont">
 
-            <div class="row text-box border p-4 overflow-scroll" id="text-cont">
-                <div id="text-box" class="">
+        <div class="col-2">
+            <div class="row p-4 overflow-scroll">
+                <div class="list-group chats">
+                    <!-- <a href="#" class="list-group-item list-group-item-action active">
+                        The current link item
+                    </a> -->
+                    <h4>History</h4>
+                    {% if chats|length > 0 %}
+                    {% for chat in chats %}
+                    {% set chat_id = chat.id %}
+                    <a href="/home/{{ chat_id }}" class="list-group-item list-group-item-action chat">
+                        {{ chat.messages.first().content }}
+                    </a>
+                    {% endfor %}
+                    {% else %}
+                    <p>There is no chat history</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8 col-cont">
+
+            <div class="row text-box p-4 overflow-scroll" id="text-cont">
+                <div id="text-box">
+                    {% if chat_msgs|length > 0 %}
                     {% for msg in chat_msgs %}
-                    {% set sender = msg.content.split(':')[0] %}
-                    {% set content = msg.content.split(':')[1] %}
                     <div>
-                        <span class="msg-details text-secondary">{{ sender }}</span>
+                        <span class="msg-details text-secondary">
+                            {% if msg.user.username %}
+                            {{ msg.user.username }}
+                            {% else %}
+                            NULL
+                            {% endif %}
+                        </span>
                         <div class="card">
-                            <div class="card-body">{{ content }}</div>
+                            <div class="card-body">
+                                {{ msg.content }}
+                            </div>
                         </div>
                     </div>
                     {% endfor %}
+                    {% else %}
+                    <p id="fresh_chat" class="text-black-50 text-center m">This is a fresh chat, feel free to ask!</p>
+                    {% endif %}
                 </div>
             </div>
             <div class="row prompt-box">
@@ -52,7 +76,11 @@
             </div>
         </div>
 
-        <div class="col-2"></div>
+        <div class="col-2">
+            <div class="list-group p-4">
+                <a href="/home" class="list-group-item list-group-item-action text-center">New chat</a>
+            </div>
+        </div>
 
     </div>
 </div>
