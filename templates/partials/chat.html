@@ -1,0 +1,33 @@
+<div id="chat-box">
+    {% if chat_msgs|length > 0 %}
+    {% for msg in chat_msgs %}
+    <div>
+        <span class="msg-details text-secondary">
+            {% if msg.user.username %}
+            {{ msg.user.username }}
+            {% else %}
+            NULL
+            {% endif %}
+        </span>
+        {% if msg.user.username == session["username"] %}
+        <div class="card" style="background-color: rgb(184, 234, 244);">
+            <div class="card-body">
+
+                {{ msg.content }}
+
+            </div>
+        </div>
+        {% else %}
+        <div class="card">
+            <div class="card-body">
+                {{ msg.content }}
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+    {% endfor %}
+    {% else %}
+    <p id="fresh_chat" class="text-black-50 text-center m">This is a fresh chat, feel free to ask!</p>
+    {% endif %}
+</div>
