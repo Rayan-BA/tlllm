@@ -19,7 +19,7 @@ const appendMessage = (message, username) => {
     details.innerText = message.user.username
     cont.appendChild(details)
     cont.appendChild(card)
-    document.getElementById("text-box").appendChild(cont)
+    document.getElementById("chat-box").appendChild(cont)
 }
 
 const post = () => {
@@ -34,7 +34,11 @@ const post = () => {
 }
 
 const setActive = (el) => {
-    el.className += " active"
+    document.querySelectorAll(".chat-history").forEach(el => {
+        if (el.classList.contains("active"))
+            el.classList.remove("active")
+    })
+    el.classList.add("active")
 }
 
 // socket.on("user message", (message) => {
