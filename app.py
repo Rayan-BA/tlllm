@@ -5,14 +5,15 @@ from flask_migrate import Migrate
 from anthropic import Anthropic
 from dotenv import load_dotenv
 from datetime import timedelta
+# from flask_cors import CORS
 from openai import OpenAI
 from os import getenv
 from db import *
-import json
 
 load_dotenv()
 
 app = Flask(__name__)
+# CORS(app)
 app.config["SECRET_KEY"] = getenv("SECRET_KEY")
 app.config["SQLALCHEMY_DATABASE_URI"] = getenv("DATABASE_URI")
 app.permanent_session_lifetime = timedelta(hours=1)
@@ -73,8 +74,11 @@ def register():
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
+        confirm_password = request.form.get("confirm_password")
         if User.query.filter(User.username == username).first():
             print("Username unavailable")
+        elif password != confirm_password:
+            pass
         else:
             newUser = User(username, password)
             db.session.add(newUser)
@@ -90,74 +94,85 @@ def client(msg):
     username = session.get("username")
 
     if username is None:
-        print("go back")
+        emit("llm message", {"content": "Please login...","user": {"username": "TLLLM"}})
         return Response(status=401)
 
-    response = openai(msg.get("content"))
-    model = response.model
-    gpt_msg = response.choices[0].message.content
+    gpt_model_name = "gpt-4o-mini"
+    gpt_response = openai(msg.get("content"), gpt_model_name)
+    gpt_msg = gpt_response.choices[0].message.content
+    
+    haiku_model_name = "claude-3-haiku-20240307"
+    haiku_response = anthropic_1(msg.get("content"), haiku_model_name)
+    haiku_msg = haiku_response.content[0].text
 
-    if User.query.filter(User.username == model).first() is None:
-        newModel = User(model, None, True)
-        db.session.add(newModel)
-        db.session.commit()
-        session["model_id"] = newModel.id
+    sonnet_model_name = "claude-3-5-sonnet-20240620"
+    sonnet_response = anthropic_2(msg.get("content"), sonnet_model_name, f"<gpt>{gpt_msg}</gpt><claude>{haiku_msg}</claude>")
+    sonnet_msg = sonnet_response.content[0].text
+
+    models = [gpt_model_name, haiku_model_name, sonnet_model_name]
+
+    for model in models:
+        if User.query.filter(User.username == model).first() is None:
+            newModel = User(model, None, True)
+            db.session.add(newModel)
+            db.session.commit()
+            # session["model_id"] = newModel.id
 
     # if username:
     user = User.query.filter(User.username == username).first()
-    model = User.query.filter(User.is_llm).first()
+    gpt_model = User.query.filter(User.username == gpt_model_name).first()
+    haiku_model = User.query.filter(User.username == haiku_model_name).first()
+    sonnet_model = User.query.filter(User.username == sonnet_model_name).first()
     # TODO: handle fresh chat
     if msg.get("chat_id") == "home":
         chat = Chat(user=user)
     else:
         chat = db.session.get(Chat, int(msg.get("chat_id")))
 
-    user_message = Message(content=msg.get("content"), user=user, chat=chat)
-    gpt_message = Message(content=gpt_msg, chat=chat, user=model)
+    add_message(msg.get("content"), chat, user)
 
-
-    user_message_dict = user_message.__dict__.copy()
-    user_message_dict["user"] = user_message_dict.get("user").__dict__.copy()
-    del user_message_dict["user"]["password"]
-    del user_message_dict["user"]["_sa_instance_state"]
-    del user_message_dict["_sa_instance_state"]
-    del user_message_dict["chat"]
-
-    gpt_message_dict = gpt_message.__dict__.copy()
-    gpt_message_dict["user"] = gpt_message_dict.get("user").__dict__.copy()
-    del gpt_message_dict["user"]["password"]
-    del gpt_message_dict["user"]["_sa_instance_state"]
-    del gpt_message_dict["_sa_instance_state"]
-    del gpt_message_dict["chat"]
-
-    db.session.add(user_message)
-    db.session.add(gpt_message)
-    db.session.commit()
-
-    # if msg.get("chat_id") == "home":
-    #     return redirect(f"/home/{chat.id}")
-    # else:
-        # emit("llm message", gpt_message)
-
+    gpt_message_dict = add_message(gpt_msg, chat, gpt_model)
     emit("llm message", gpt_message_dict)
+    
+    haiku_message_dict = add_message(haiku_msg, chat, haiku_model)
+    emit("llm message", haiku_message_dict)
+    
+    sonnet_message_dict = add_message(sonnet_msg, chat, sonnet_model)
+    emit("llm message", sonnet_message_dict)
 
-def openai(prompt):
+def add_message(content, chat, user) -> dict[str, any]:
+    message = Message(content=content, user=user, chat=chat)
+    message_dict = message.__dict__.copy()
+    
+    message_dict["user"] = message_dict.get("user").__dict__.copy()
+    if not user.is_llm:
+        del message_dict["user"]["password"]
+    del message_dict["user"]["_sa_instance_state"]
+    del message_dict["_sa_instance_state"]
+    del message_dict["chat"]
+    
+    # not efficient but i wanna send messages as they come. will fix with concurrency maybe
+    db.session.add(message)
+    db.session.commit()
+    
+    return message_dict
+
+def openai(prompt, model):
     chatGPT_client = OpenAI()
     response = chatGPT_client.chat.completions.create(
-        model="gpt-4o-mini",
+        model=model,
         messages=[{"role": "user", "content": prompt}],
         max_tokens=1000,
         temperature=0
     )
     return response
 
-def anthropic(prompt):
+def anthropic_1(prompt, model):
     claude_client = Anthropic()
     response = claude_client.messages.create(
-        model="claude-3-5-sonnet-20240620",
+        model=model,
         max_tokens=1000,
         temperature=0,
-        system="You are a world-class poet. Respond only with short poems.",
         messages=[
             {
                 "role": "user",
@@ -165,7 +180,31 @@ def anthropic(prompt):
             }
         ]
     )
-    print(response) 
+    return response
+
+def anthropic_2(prompt, model, messages):
+    system_rule = f'''
+                    You're tasked with combining the best points from two messages, the first is wrapped with <gpt></gpt> tags and second in <claude></claude>.
+                    You must follow these rules:
+                    1- keep it short, less than 500 words.
+                    2- don't add a point of your own, only from provided messages.
+                    3- don't say that all points are valid, assume there are objectivly better points.
+
+                    {messages}
+                  '''
+    claude_client = Anthropic()
+    response = claude_client.messages.create(
+        model=model,
+        max_tokens=1000,
+        temperature=0,
+        system=system_rule,
+        messages=[
+            {
+                "role": "user",
+                "content": [{"type": "text", "text": prompt}]
+            }
+        ]
+    )
     return response
 
 if __name__ == "__main__":
@@ -174,4 +213,4 @@ if __name__ == "__main__":
     # server = WSGIServer(("127.0.0.1", 5000), app)
     # print("Server started at 127.0.0.1:5000")
     # server.serve_forever()
-    socketio.run(app)
+    socketio.run(app, host="0.0.0.0", port=5000)
