@@ -40,9 +40,9 @@ def get_chat(chat_id):
     if db.session.get(Chat, chat_id).user_id != session.get("user_id"):
         return redirect("/home")
         
-    chats = Chat.query.filter(Chat.user_id == session.get("user_id")).all()
+    # chats = Chat.query.filter(Chat.user_id == session.get("user_id")).all()
     messages = Message.query.filter(Message.chat_id == chat_id).order_by(Message.timestamp.desc()).all()
-    return render_template("home.html", chats=chats, chat_msgs=messages)
+    return render_template("/partials/chat.html", chat_msgs=messages)
 
 @app.route("/login", methods=["GET", "POST"])
 def login():

@@ -20,7 +20,13 @@
     </div>
     <div class="row row-cont">
 
-        <div class="col-2">
+        <div class="sidebar-toggle">
+            <div class="hamburger">
+                <span></span>
+            </div>
+        </div>
+
+        <div class="col-2 sidebar">
             <div class="list-group p-4">
                 <a href="/home" class="list-group-item list-group-item-action text-center">
                     New chat
@@ -35,7 +41,8 @@
                     {% if chats|length > 0 %}
                     {% for chat in chats %}
                     {% set chat_id = chat.id %}
-                    <a href="/home/{{ chat_id }}" class="list-group-item list-group-item-action chat-history"
+                    <a hx-get="/home/{{ chat_id }}" hx-target="#chat-box" hx-swap="innerHTML"
+                        class="list-group-item list-group-item-action text-truncate chat-history"
                         onclick="setActive(this)">
                         {{ chat.messages.first().content }}
                     </a>
@@ -50,7 +57,7 @@
         <div class="col-lg-8 col-cont">
 
             <div class="row text-box p-4 overflow-scroll" id="text-cont">
-                <div id="text-box">
+                <div id="chat-box">
                     {% if chat_msgs|length > 0 %}
                     {% for msg in chat_msgs %}
                     <div>
@@ -85,9 +92,12 @@
                 </div>
             </div>
             <div class="row prompt-box">
+                <!-- <div class="col"> -->
                 <textarea class="form-control" name="prompt" id="prompt" placeholder="Ask anythin here..."
                     autofocus></textarea>
-                <button class="btn btn-primary mt-2" id="btn" type="submit" onclick="post()">Send</button>
+                <!-- </div> -->
+                <!-- <div class="col-1"><button class="btn btn-primary w-100 h-100" id="btn" type="submit"
+                        onclick="post()">Send</button></div> -->
             </div>
         </div>
 
