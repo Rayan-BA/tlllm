@@ -1,11 +1,14 @@
 var socket = io()
 
-const appendMessage = (message) => {
+const appendMessage = (message, username) => {
     // var model = null
     // model = message.split(":")[0]
     // message = message.split(":")[1]
     const card = document.createElement("div")
     card.setAttribute("class", "card")
+    if (message.user.username === username) {
+        card.setAttribute("style", "background-color: rgb(184, 234, 244);")
+    }
     const card_body = document.createElement("div")
     card_body.setAttribute("class", "card-body")
     card_body.innerText = message.content
@@ -26,8 +29,12 @@ const post = () => {
     var username = document.cookie.split("=")[1]
     socket.emit("user prompt", { "content": message.value, "chat_id": chat_id })
     try { document.getElementById("fresh_chat").remove() } catch { }
-    appendMessage({ "content": message.value, "user": { "username": username } })
+    appendMessage({ "content": message.value, "user": { "username": username } }, username)
     message.value = ""
+}
+
+const setActive = (el) => {
+    el.className += " active"
 }
 
 // socket.on("user message", (message) => {

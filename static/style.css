@@ -29,3 +29,7 @@ textarea {
     opacity: 60%;
     user-select: none;
 }
+
+.chat-history {
+    text-overflow: ellipsis;
+}

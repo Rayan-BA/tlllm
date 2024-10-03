@@ -12,9 +12,7 @@
                 {% if session["username"] %}
                 <a href="/logout" class="align-self-center text-black">Logout</a>
                 {% else %}
-                <a href="/login" class="align-self-center text-black">Login to save
-                    your
-                    chats</a>
+                <a href="/login" class="align-self-center text-black">Login</a>
                 {% endif %}
             </div>
         </div>
@@ -23,16 +21,22 @@
     <div class="row row-cont">
 
         <div class="col-2">
-            <div class="row p-4 overflow-scroll">
-                <div class="list-group chats">
+            <div class="list-group p-4">
+                <a href="/home" class="list-group-item list-group-item-action text-center">
+                    New chat
+                </a>
+            </div>
+            <div class="row p-4">
+                <h4>History</h4>
+                <div class="list-group overflow-scroll chats">
                     <!-- <a href="#" class="list-group-item list-group-item-action active">
                         The current link item
                     </a> -->
-                    <h4>History</h4>
                     {% if chats|length > 0 %}
                     {% for chat in chats %}
                     {% set chat_id = chat.id %}
-                    <a href="/home/{{ chat_id }}" class="list-group-item list-group-item-action chat">
+                    <a href="/home/{{ chat_id }}" class="list-group-item list-group-item-action chat-history"
+                        onclick="setActive(this)">
                         {{ chat.messages.first().content }}
                     </a>
                     {% endfor %}
@@ -57,11 +61,22 @@
                             NULL
                             {% endif %}
                         </span>
+                        {% if msg.user.username == session["username"] %}
+                        <div class="card" style="background-color: rgb(184, 234, 244);">
+                            <div class="card-body">
+
+                                {{ msg.content }}
+
+                            </div>
+                        </div>
+                        {% else %}
                         <div class="card">
                             <div class="card-body">
                                 {{ msg.content }}
                             </div>
                         </div>
+                        {% endif %}
+
                     </div>
                     {% endfor %}
                     {% else %}
@@ -76,11 +91,9 @@
             </div>
         </div>
 
-        <div class="col-2">
-            <div class="list-group p-4">
-                <a href="/home" class="list-group-item list-group-item-action text-center">New chat</a>
-            </div>
-        </div>
+        <!-- <div class="col-2">
+            
+        </div> -->
 
     </div>
 </div>
